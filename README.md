@@ -143,7 +143,7 @@ build_flags =
 lib_deps = 
 	knolleary/PubSubClient@^2.8
 	bblanchon/ArduinoJson@^6.18.5
-	https://github.com/io7lab/ConfigPortal32
+	https://github.com/yhur/ConfigPortal32
 	https://github.com/io7lab/IO7F32
  ```
 
@@ -154,4 +154,4 @@ It handles
 2. IO7 IOT meta data update
 3. Over the Air Firmware Update
 4. Configuration reporting
-5. And this uses the https://github.com/io7lab/ConfigPortal32 as the WiFi configuration utility.
+5. And this uses the https://github.com/yhur/ConfigPortal32 as the WiFi configuration utility.
