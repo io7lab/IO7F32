@@ -20,9 +20,9 @@ char upgradeTopic[200]  = "iot3/%s/mgmt/initiate/firmware/update";
 
 String user_config_html = ""
     "<p><input type='text' name='broker' placeholder='Broker'>"
-    "<div id='mqtt' style='{display:flex;}'>"
-    "<label class='radio-inline'><input type='radio' name='ssl' value='false' checked/>No SSL</label>"
-    "<label class='radio-inline'><input type='radio' name='ssl' value='true' />Use SSL</label>"
+    "<div id='mqtt' style='display:flex;margin-left:37%'>"
+    "<p>No SSL<input type='radio' name='ssl' value='false' checked style='margin-left:50%'/></p>"
+    "<p style='margin-left: 10%;'>Use SSL<input type='radio' name='ssl' value='true' style='margin-left: 50%;'/></p>"
     "</div>"
     "<p><input type='text' name='devId' placeholder='Device Id'>"
     "<p><input type='text' name='token' placeholder='Device Token'>"
