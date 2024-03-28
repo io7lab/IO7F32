@@ -20,9 +20,8 @@ char upgradeTopic[200]  = "iot3/%s/mgmt/initiate/firmware/update";
 
 String user_config_html = ""
     "<p><input type='text' name='broker' placeholder='Broker'>"
-    "<div id='mqtt' style='display:flex;margin-left:37%'>"
-    "<p>No SSL<input type='radio' name='ssl' value='false' checked style='margin-left:50%'/></p>"
-    "<p style='margin-left: 10%;'>Use SSL<input type='radio' name='ssl' value='true' style='margin-left: 50%;'/></p>"
+    "<div style='margin-left:50px'>"
+    "<h3>Use SSL : <input type='checkbox' name='ssl' value='true'/></h3>"
     "</div>"
     "<p><input type='text' name='devId' placeholder='Device Id'>"
     "<p><input type='text' name='token' placeholder='Device Token'>"
@@ -58,7 +57,7 @@ char                msgBuffer[JSON_CHAR_LENGTH];
 unsigned long       pubInterval;
 int                 mqttPort;
 
-char                caFile[] = "/ca.txt";
+char                caFile[] = "/ca.pem";
 String              ca = ""
    "-----BEGIN CERTIFICATE-----\n"
    "MIIDhjCCAm4CCQC5R8/qqp9yLjANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n"
@@ -114,7 +113,7 @@ void initDevice() {
     if (!cfg.containsKey("config") || strcmp((const char*)cfg["config"], "done")) {
 // MODIFY HERE FOR CERTIFICATE
         webServer.on("/check_ssl", [](){
-            if (strcmp((const char*)cfg["ssl"], "true") == 0) {
+            if (cfg.containsKey("ssl") &&  strcmp((const char*)cfg["ssl"], "true") == 0) {
                 char buffer[2000];
                 if (LittleFS.exists(caFile)) {
                     sprintf(buffer, cert_html.c_str(), ca.c_str());
@@ -140,7 +139,10 @@ void initDevice() {
         configDevice();
     } else {
         const char* devId = (const char*)cfg["devId"];
-        const char* ssl = (const char*)cfg["ssl"];
+        const char* ssl = "false";
+        if (cfg.containsKey("ssl")) {
+            ssl = (const char*)cfg["ssl"];
+        }
         setDevId(evtTopic, devId);
         setDevId(logTopic, devId);
         setDevId(connTopic, devId);
