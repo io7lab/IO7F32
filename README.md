@@ -1,5 +1,7 @@
 # IO7 Foundation for ESP32
 
+This is a part of io7 IOT Platform https://github.com/io7lab to help build an IOT device.
+
 With this library, the developer can create an IO7 ESP32 IOT device which
 1. helps configure with the Captive Portal if not configured as in the following picture,
 2. or boots with the stored configuration if configured already,
