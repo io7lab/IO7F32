@@ -1,4 +1,4 @@
-# IO7 Foundation for ESP32
+# IO7 Framework for ESP32
 
 This is a part of io7 IOT Platform https://github.com/io7lab to help build an IOT device.
 
