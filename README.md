@@ -7,7 +7,8 @@ With this library, the developer can create an IO7 ESP32 IOT device which
 2. or boots with the stored configuration if configured already,
 3. connects to the WiFi/IO7 IOT Platform and run the loop function
 
-![IMG_1060](https://github.com/io7lab/IO7F32/assets/13171662/7aa7e114-2456-4545-8268-28557055108f)
+<img width="590" height="812" alt="image" src="https://github.com/user-attachments/assets/2af1fc32-2752-4335-bfd9-184adecd8472" />
+
 
 # How to use the IO7F32
 You can create a PlatformIO project with the example directory and modify the src/main.cpp for your purpose and build it.
