@@ -60,7 +60,7 @@ String cert_html = ""
     "</body></html>";
 
 String new_redirect_html = ""
-    "<html><head><meta http-equiv='refresh' content='0; URL=http:/check_ssl' /></head>"
+    "<html><head><meta http-equiv='refresh' content='0; URL=/check_ssl' /></head>"
     "<body><p>Redirecting</body></html>";
 
 extern String       user_html;
@@ -131,13 +131,14 @@ void initDevice() {
 // MODIFY HERE FOR CERTIFICATE
         webServer.on("/check_ssl", [](){
             if (cfg.containsKey("ssl") &&  strcmp((const char*)cfg["ssl"], "true") == 0) {
-                char buffer[2000];
-                if (LittleFS.exists(caFile)) {
-                    sprintf(buffer, cert_html.c_str(), ca.c_str());
-                } else {
-                    sprintf(buffer, cert_html.c_str(), "");
+                // the CA may be a multi-certificate chain of several KB: size
+                // the page buffer on the heap, a stack buffer would overflow
+                char* page = new (std::nothrow) char[cert_html.length() + ca.length() + 16];
+                if (page) {
+                    sprintf(page, cert_html.c_str(), ca.c_str());
+                    webServer.send(200, "text/html", page);
+                    delete[] page;
                 }
-                webServer.send(200, "text/html", buffer);
             } else {
                 webServer.send(200, "text/html", postSave_html);
             }
@@ -147,12 +148,15 @@ void initDevice() {
                 File f = LittleFS.open(caFile, "w");
                 f.print(webServer.arg("cert"));
                 f.close();
+                ca = webServer.arg("cert");
             } else {
                 LittleFS.remove(caFile);
+                ca = "";
             }
             webServer.send(200, "text/html", postSave_html);
         });
         redirect_html = new_redirect_html;
+        user_config_html = user_config_html + user_html;
         configDevice();
     } else {
         const char* devId = (const char*)cfg["devId"];
