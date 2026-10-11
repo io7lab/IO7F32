@@ -6,6 +6,7 @@
 #include <PubSubClient.h>
 #include <HTTPUpdate.h>
 #include <ESPmDNS.h>
+#include <mbedtls/x509_crt.h>
 
 const char compile_date[] = __DATE__ " " __TIME__;
 char cmdTopic[200]      = "iot3/%s/cmd/+/fmt/+";
@@ -52,12 +53,28 @@ String cert_html = ""
             "button { border:0;border-radius:0.3rem;background-color:#1fa3ec;"
             "color:#fff; line-height:2em;font-size:3em;width:90%%;}"
         "</style>"
-        "<center><h1>Certificate</h1>"
-        "<form action='/cert_save' method='post'>"
-            "<p><textarea type='text' name='cert' placeholder='Default io7lab certificate'>%s</textarea>"
+        "<center><h1>Certificate</h1>%s"
+        "<form action='/cert_save' method='post' enctype='multipart/form-data'>"
+            "<p><textarea type='text' name='cert' placeholder=\"Default Let's Encrypt certificate\">%s</textarea>"
             "<p><button type='submit'>Save</button>"
         "</form></center>"
     "</body></html>";
+
+String cert_error_html = ""
+    "<html><head><title>Certificate Not Saved</title></head><body><center>"
+        "<h1>The pasted text is not a valid certificate</h1>"
+        "<p>It did not parse as a PEM X.509 certificate. Check that every"
+        " -----BEGIN CERTIFICATE----- block is complete with its -----END"
+        " CERTIFICATE----- line.</p>"
+        "<p><button type='button' onclick=\"location.href='/check_ssl'\">Back to the certificate page</button></p>"
+    "</center></body></html>";
+
+String cert_default_html = ""
+    "<html><head><title>Certificate Cleared</title></head><body><center>"
+        "<h5>Stored certificate removed</h5>"
+        "<h5>The default Let's Encrypt certificate will be used</h5>"
+        "<p><button type='button' onclick=\"location.href='/reboot'\">Reboot</button>"
+    "</center></body></html>";
 
 String new_redirect_html = ""
     "<html><head><meta http-equiv='refresh' content='0; URL=/check_ssl' /></head>"
@@ -77,30 +94,35 @@ int                 mqttPort;
 char                caFile[] = "/ca.pem";
 String              ca = ""
    "-----BEGIN CERTIFICATE-----\n"
-   "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\n"
+   "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\n"
    "-----END CERTIFICATE-----\n";
 
 void handleIOTCommand(char* topic, byte* payload, unsigned int payloadLength);
 void (*userCommand)(char* topic, JsonDocument* root) = NULL;
 void (*userMeta)() = NULL;
+
+// Returns the number of certificates that failed to parse as PEM/DER X.509
+static int checkX509Pem(const String& pem) {
+    mbedtls_x509_crt chain;
+    mbedtls_x509_crt_init(&chain);
+    int errors = mbedtls_x509_crt_parse(&chain,
+                    (const unsigned char*)pem.c_str(), pem.length() + 1);
+    mbedtls_x509_crt_free(&chain);
+    return errors < 0 ? 999 : errors;    // parse-level failure counts as invalid
+}
 
 bool subscribeTopic(const char* topic) {
     if (client.subscribe(topic)) {
@@ -122,20 +144,30 @@ void initDevice() {
     loadConfig();
     if (LittleFS.exists(caFile)) {
         File f = LittleFS.open(caFile, "r");
-        ca = f.readString();
-        ca.trim();
+        String stored = f.readString();
+        stored.trim();
         f.close();
+        if (checkX509Pem(stored) == 0) {  // validate before trusting
+            ca = stored;
+        } else {
+            Serial.println("/ca.pem does not parse as a certificate: keeping the built-in default CA");
+        }
     }
 
     if (!cfg.containsKey("config") || strcmp((const char*)cfg["config"], "done")) {
 // MODIFY HERE FOR CERTIFICATE
+        user_config_html = user_config_html + user_html;
         webServer.on("/check_ssl", [](){
             if (cfg.containsKey("ssl") &&  strcmp((const char*)cfg["ssl"], "true") == 0) {
+                const char* note = LittleFS.exists(caFile)
+                    ? "<p>Storing a user certificate. Clear the field and press Save to revert to the default.</p>"
+                    : "<p>No user certificate stored. The default Let's Encrypt certificate will be used.</p>";
+                String prefill = LittleFS.exists(caFile) ? ca : "";
                 // the CA may be a multi-certificate chain of several KB: size
                 // the page buffer on the heap, a stack buffer would overflow
-                char* page = new (std::nothrow) char[cert_html.length() + ca.length() + 16];
+                char* page = new (std::nothrow) char[cert_html.length() + ca.length() + 200];
                 if (page) {
-                    sprintf(page, cert_html.c_str(), ca.c_str());
+                    sprintf(page, cert_html.c_str(), note, prefill.c_str());
                     webServer.send(200, "text/html", page);
                     delete[] page;
                 }
@@ -144,19 +176,25 @@ void initDevice() {
             }
         });
         webServer.on("/cert_save", HTTP_POST, [](){
-            if (webServer.arg("cert").length() > 0) {
-                File f = LittleFS.open(caFile, "w");
-                f.print(webServer.arg("cert"));
-                f.close();
-                ca = webServer.arg("cert");
-            } else {
+            String pasted = webServer.arg("cert");
+            pasted.trim();
+            if (pasted.length() == 0) {
+                // empty field: revert to the built-in default
                 LittleFS.remove(caFile);
                 ca = "";
+                webServer.send(200, "text/html", cert_default_html);
+            } else if (checkX509Pem(pasted) == 0) {
+                // a paste must parse as PEM X.509 or it is refused
+                File out = LittleFS.open(caFile, "w");
+                out.print(pasted);
+                out.close();
+                ca = pasted;
+                webServer.send(200, "text/html", postSave_html);
+            } else {
+                webServer.send(200, "text/html", cert_error_html);
             }
-            webServer.send(200, "text/html", postSave_html);
         });
         redirect_html = new_redirect_html;
-        user_config_html = user_config_html + user_html;
         configDevice();
     } else {
         const char* devId = (const char*)cfg["devId"];
